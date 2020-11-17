@@ -61,18 +61,28 @@ RSpec.describe User, type: :model do
       expect(@my_user).not_to be_valid
     end
 
+    it "should validate a user if the email and password match" do
+      @my_user.save
+      @my_user_validated = User.authenticate_with_credentials(@my_user.email, @my_user.password)
+      expect(@my_user).to eq(@my_user_validated)
+    end
+
     it 'should not save a new user when email is a duplicate of another user' do
-      @my_user.email = "willemail@gmail.com"
-      @my_second_user.email = "willemail@gmail.com"
       @my_user.save
       @my_second_user.save
-      expect(@user.errors.full_messages).to include("email")
+      expect(@my_second_user.errors).to be_present
     end
 
     it 'should let a new user log in even when they add random spaces to their email' do
+      @my_user.save
+      @my_user_validated = User.authenticate_with_credentials("    willemail@gmail.com   ", @my_user.password)
+      expect(@my_user).to eq(@my_user_validated)
     end
 
     it 'should should allow a user to log in regardless of the case they use for the letters of their email address' do
+      @my_user.save
+      @my_user_validated = User.authenticate_with_credentials("wIlLeMaIl@GmAiL.cOm", @my_user.password)
+      expect(@my_user).to eq(@my_user_validated)
     end
 
   end
@@ -80,13 +90,33 @@ RSpec.describe User, type: :model do
 
   describe '.authenticate_with_credentials' do
 
-    #define new class method on User model authenticate_with_credentials (which should still use the authenticate instance method provided by the has_secure_password gem)
-    #use this new class method in Sessions controller
+    before do
+      @my_user = User.new(
+        fname: 'Will',
+        lname: 'Portman',
+        email: 'willemail@gmail.com',
+        password: '123password',
+        password_confirmation: '123password'
+      )
+      @my_second_user = User.new(
+        fname: 'Will',
+        lname: 'Portman',
+        email: 'willemail@gmail.com',
+        password: '123password',
+        password_confirmation: '123password'
+      )
+    end
 
     it 'returns nil if email address and password inputs do not match' do
+      @my_user.save
+      @my_user_validated = User.authenticate_with_credentials("NotWillsEmail@gmail.com", @my_user.password)
+      expect(@my_user_validated).to eq(nil)
     end
     
     it 'returns an instance of the user if email address and password inputs match' do
+      @my_user.save
+      @my_user_validated = User.authenticate_with_credentials("willemail@gmail.com", @my_user.password)
+      expect(@my_user_validated).to eq(@my_user)
     end
 
   end
